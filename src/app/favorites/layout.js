@@ -1,5 +1,6 @@
 //app/favourites/layout.js
-export default function FavortieLayout({ children }) {
+
+export default function FavoriteLayout({ children }) {
       return (
             <section className="list">
                   <h1>Favorite List Pokemon</h1>
