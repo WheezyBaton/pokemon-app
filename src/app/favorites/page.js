@@ -4,25 +4,48 @@
 
 import { useState, useEffect, Suspense } from "react";
 import PokemonList from "../components/PokemonList";
+import { fetchPokemonById, fetchTypes } from "@/app/services/api";
 
 export default function FavoritePage({ searchParams }) {
       const [favoritePokemons, setFavoritePokemons] = useState([]);
       const [typesName, setTypesName] = useState([]);
-      const [isMounted, setIsMounted] = useState(false);
+      const [isLoading, setIsLoading] = useState(true);
 
       useEffect(() => {
-            const storagePokemons = localStorage.getItem("favoritePokemons");
-            if (storagePokemons) setFavoritePokemons(JSON.parse(storagePokemons));
+            const loadData = async () => {
+                  const storagePokemons = JSON.parse(localStorage.getItem("favoritePokemons")) || [];
 
-            const storedTypes = localStorage.getItem("types");
-            if (storedTypes) setTypesName(JSON.parse(storedTypes));
+                  if (storagePokemons.length > 0) {
+                        try {
+                              const freshPokemons = await Promise.all(
+                                    storagePokemons.map((p) => fetchPokemonById(p.id)),
+                              );
+                              const formattedPokemons = freshPokemons.map((pokemon) => ({
+                                    name: pokemon.name,
+                                    id: pokemon.id,
+                                    pokemonUrl: pokemon.sprites?.other?.["official-artwork"]?.front_default,
+                                    types: pokemon.types,
+                              }));
+                              setFavoritePokemons(formattedPokemons);
+                        } catch (error) {
+                              console.error("Error loading favorites", error);
+                        }
+                  }
 
-            setIsMounted(true);
+                  try {
+                        const types = await fetchTypes();
+                        setTypesName(types);
+                  } catch (error) {
+                        console.error("Error loading", error);
+                  }
+
+                  setIsLoading(false);
+            };
+
+            loadData();
       }, []);
 
-      if (!isMounted) {
-            return <p>Loading favorites...</p>;
-      }
+      if (isLoading) return <p>Loading favorites...</p>;
 
       const type = searchParams.type || "all";
       const limitParam = searchParams.limit || "20";
@@ -49,7 +72,7 @@ export default function FavoritePage({ searchParams }) {
             .slice(0, limit);
 
       return (
-            <Suspense fallback={<p>Wczytywanie filtrów...</p>}>
+            <Suspense fallback={<p>Loading filters...</p>}>
                   <PokemonList pokemons={filteredPokemons} types={typesName} />
             </Suspense>
       );
