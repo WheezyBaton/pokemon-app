@@ -1,8 +1,9 @@
 //app/components/PokemonList.js
+
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { FaRegStar, FaStar } from "react-icons/fa";
 import { IoIosAddCircle, IoIosCloseCircle } from "react-icons/io";
 import { useState, useEffect } from "react";
@@ -14,6 +15,14 @@ export default function PokemonList({ pokemons, types, isComparing = false }) {
 
       const router = useRouter();
       const routePathname = usePathname();
+      const searchParams = useSearchParams();
+
+      const currentName = searchParams.get("name") || "";
+      const currentType = searchParams.get("type") || "all";
+      const currentLimit = searchParams.get("limit") || 20;
+
+      const [searchValue, setSearchValue] = useState(currentName);
+      const [limitValue, setLimitValue] = useState(currentLimit);
 
       useEffect(() => {
             const favPokemons = JSON.parse(localStorage.getItem("favoritePokemons")) || [];
@@ -30,9 +39,8 @@ export default function PokemonList({ pokemons, types, isComparing = false }) {
 
       function handleAddSearchParam(type, param) {
             const currentParams = new URLSearchParams(window.location.search);
-
             currentParams.set(type, param);
-            currentParams.set("limit", document.getElementById("limit").value);
+            currentParams.set("limit", limitValue);
             router.push(`${routePathname}?${currentParams.toString()}`);
       }
 
@@ -86,20 +94,20 @@ export default function PokemonList({ pokemons, types, isComparing = false }) {
                   <section className="form">
                         <div>
                               <span>Pokemon name:</span>
-                              <input type="text" id="search_input" />
-                              <button
-                                    id="search_btn"
-                                    onClick={() =>
-                                          handleAddSearchParam("name", document.getElementById("search_input").value)
-                                    }
-                              >
+                              <input
+                                    type="text"
+                                    id="search_input"
+                                    value={searchValue}
+                                    onChange={(e) => setSearchValue(e.target.value)}
+                              />
+                              <button id="search_btn" onClick={() => handleAddSearchParam("name", searchValue)}>
                                     Search
                               </button>
                         </div>
                         <div>
                               <label>
                                     <span>Pokemon type:</span>
-                                    <select className="type" onChange={handleSelectChange}>
+                                    <select className="type" onChange={handleSelectChange} defaultValue={currentType}>
                                           {types.map((type) => (
                                                 <option key={type} value={type}>
                                                       {type}
@@ -112,12 +120,13 @@ export default function PokemonList({ pokemons, types, isComparing = false }) {
                               <label>
                                     <span>Pokemon limit:</span>
                                     <input
-                                          defaultValue={20}
+                                          value={limitValue}
+                                          onChange={(e) => setLimitValue(e.target.value)}
                                           placeholder="Limit"
                                           id="limit"
                                           type="number"
                                           min={1}
-                                          max={20}
+                                          max={50}
                                     />
                               </label>
                         </div>
@@ -131,7 +140,7 @@ export default function PokemonList({ pokemons, types, isComparing = false }) {
                                           <Link href={`/pokemon/${pokemon.id}`}>
                                                 <img
                                                       src={pokemon.pokemonUrl}
-                                                      alt="Pokemon Image"
+                                                      alt={`${pokemon.name} image`}
                                                       width={100}
                                                       height={100}
                                                 />
