@@ -1,19 +1,27 @@
-//app/favourites/page.js
+//app/favorites/page.js
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PokemonList from "../components/PokemonList";
 
-export default function FavortiePage({ searchParams }) {
-      const [favoritePokemons] = useState(() => {
-            const storagePokemons = localStorage.getItem("favoritePokemons");
-            return storagePokemons ? JSON.parse(storagePokemons) : [];
-      });
+export default function FavoritePage({ searchParams }) {
+      const [favoritePokemons, setFavoritePokemons] = useState([]);
+      const [typesName, setTypesName] = useState([]);
+      const [isMounted, setIsMounted] = useState(false);
 
-      const [typesName] = useState(() => {
+      useEffect(() => {
+            const storagePokemons = localStorage.getItem("favoritePokemons");
+            if (storagePokemons) setFavoritePokemons(JSON.parse(storagePokemons));
+
             const storedTypes = localStorage.getItem("types");
-            return storedTypes ? JSON.parse(storedTypes) : [];
-      });
+            if (storedTypes) setTypesName(JSON.parse(storedTypes));
+
+            setIsMounted(true);
+      }, []);
+
+      if (!isMounted) {
+            return <p>Loading favorites...</p>;
+      }
 
       const type = searchParams.type || "all";
       const limitParam = searchParams.limit || "20";
