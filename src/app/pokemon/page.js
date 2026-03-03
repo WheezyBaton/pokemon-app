@@ -1,61 +1,64 @@
-'use client'
+//app/pokemon/page.js
+"use client";
 
-import { useState } from 'react'
-import PokemonList from "../components/PokemonList"
-import config from "@/app/config.json"
+import { useState } from "react";
+import PokemonList from "../components/PokemonList";
+import config from "@/app/config.json";
 
 export default function PokemonPage({ searchParams }) {
-  const { typesEndpoint, pokemonsEndpoint } = config.APIConfig
-  
-  const [pokemons, setPokemons] = useState([]) 
-  const [typesName, setTypesName] = useState([])
+      const { typesEndpoint, pokemonsEndpoint } = config.APIConfig;
 
-  async function fetchPokemonData() {
-    const data = await fetch(`${pokemonsEndpoint}?limit=${config.limit}`, { next: { revalidate: 60 } }).then(res => res.json())
+      const [pokemons, setPokemons] = useState([]);
+      const [typesName, setTypesName] = useState([]);
 
-    const pokemons = await Promise.all(
-      data.results.map(async pokemonData => {
-        const pokemon = await (await fetch(pokemonData.url, { next: { revalidate: 60 } })).json()
-        return {
-          name: pokemon.name,
-          id: pokemon.id,
-          pokemonUrl: pokemon.sprites.other["official-artwork"].front_default,
-          types: pokemon.types
-        }
-      })
-    )
-    setPokemons(pokemons)
-  }
+      async function fetchPokemonData() {
+            const data = await fetch(`${pokemonsEndpoint}?limit=${config.limit}`, { next: { revalidate: 60 } }).then(
+                  (res) => res.json(),
+            );
 
-  async function fetchTypesData() {
-    const types = await fetch(`${typesEndpoint}`)
-      .then(res => res.json())
-      .then(data => data.results.map(type => type.name))
-    setTypesName(types)
-  }
+            const pokemons = await Promise.all(
+                  data.results.map(async (pokemonData) => {
+                        const pokemon = await (await fetch(pokemonData.url, { next: { revalidate: 60 } })).json();
+                        return {
+                              name: pokemon.name,
+                              id: pokemon.id,
+                              pokemonUrl: pokemon.sprites.other["official-artwork"].front_default,
+                              types: pokemon.types,
+                        };
+                  }),
+            );
+            setPokemons(pokemons);
+      }
 
-  if (pokemons.length === 0) fetchPokemonData()
-  if (typesName.length === 0) fetchTypesData()
+      async function fetchTypesData() {
+            const types = await fetch(`${typesEndpoint}`)
+                  .then((res) => res.json())
+                  .then((data) => data.results.map((type) => type.name));
+            setTypesName(types);
+      }
 
-  const type = searchParams.type || 'all'
-  const limitParam = searchParams.limit || '20'
-  const limit = Math.min(parseInt(limitParam), 20)
-  const name = searchParams.name || ''
+      if (pokemons.length === 0) fetchPokemonData();
+      if (typesName.length === 0) fetchTypesData();
 
-  const filterType = pokemon => {
-    if (type === 'all') return true
-    return pokemon.types.map(type => type.type.name).includes(type)
-  }
+      const type = searchParams.type || "all";
+      const limitParam = searchParams.limit || "20";
+      const limit = Math.min(parseInt(limitParam), 20);
+      const name = searchParams.name || "";
 
-  const filterName = pokemon => {
-    return pokemon.name.toLowerCase().includes(name.toLowerCase())
-  }
+      const filterType = (pokemon) => {
+            if (type === "all") return true;
+            return pokemon.types.map((type) => type.type.name).includes(type);
+      };
 
-  const filteredPokemons = pokemons.filter(pokemon => filterName(pokemon) && filterType(pokemon)).slice(0, limit)
+      const filterName = (pokemon) => {
+            return pokemon.name.toLowerCase().includes(name.toLowerCase());
+      };
 
-  return (
-    <section className="pokemons_list">
-      <PokemonList pokemons={filteredPokemons} types={[...typesName, 'all']} />
-    </section>
-  )
+      const filteredPokemons = pokemons.filter((pokemon) => filterName(pokemon) && filterType(pokemon)).slice(0, limit);
+
+      return (
+            <section className="pokemons_list">
+                  <PokemonList pokemons={filteredPokemons} types={[...typesName, "all"]} />
+            </section>
+      );
 }
