@@ -1,44 +1,29 @@
 //app/pokemon/page.js
-"use client";
-
-import { useState } from "react";
 import PokemonList from "../components/PokemonList";
 import config from "@/app/config.json";
 
-export default function PokemonPage({ searchParams }) {
+export default async function PokemonPage({ searchParams }) {
       const { typesEndpoint, pokemonsEndpoint } = config.APIConfig;
 
-      const [pokemons, setPokemons] = useState([]);
-      const [typesName, setTypesName] = useState([]);
+      const data = await fetch(`${pokemonsEndpoint}?limit=${config.limit}`, { next: { revalidate: 60 } }).then((res) =>
+            res.json(),
+      );
 
-      async function fetchPokemonData() {
-            const data = await fetch(`${pokemonsEndpoint}?limit=${config.limit}`, { next: { revalidate: 60 } }).then(
-                  (res) => res.json(),
-            );
+      const pokemons = await Promise.all(
+            data.results.map(async (pokemonData) => {
+                  const pokemon = await fetch(pokemonData.url, { next: { revalidate: 60 } }).then((res) => res.json());
+                  return {
+                        name: pokemon.name,
+                        id: pokemon.id,
+                        pokemonUrl: pokemon.sprites.other["official-artwork"].front_default,
+                        types: pokemon.types,
+                  };
+            }),
+      );
 
-            const pokemons = await Promise.all(
-                  data.results.map(async (pokemonData) => {
-                        const pokemon = await (await fetch(pokemonData.url, { next: { revalidate: 60 } })).json();
-                        return {
-                              name: pokemon.name,
-                              id: pokemon.id,
-                              pokemonUrl: pokemon.sprites.other["official-artwork"].front_default,
-                              types: pokemon.types,
-                        };
-                  }),
-            );
-            setPokemons(pokemons);
-      }
-
-      async function fetchTypesData() {
-            const types = await fetch(`${typesEndpoint}`)
-                  .then((res) => res.json())
-                  .then((data) => data.results.map((type) => type.name));
-            setTypesName(types);
-      }
-
-      if (pokemons.length === 0) fetchPokemonData();
-      if (typesName.length === 0) fetchTypesData();
+      const typesData = await fetch(typesEndpoint)
+            .then((res) => res.json())
+            .then((data) => data.results.map((type) => type.name));
 
       const type = searchParams.type || "all";
       const limitParam = searchParams.limit || "20";
@@ -58,7 +43,7 @@ export default function PokemonPage({ searchParams }) {
 
       return (
             <section className="pokemons_list">
-                  <PokemonList pokemons={filteredPokemons} types={[...typesName, "all"]} />
+                  <PokemonList pokemons={filteredPokemons} types={[...typesData, "all"]} />
             </section>
       );
 }
