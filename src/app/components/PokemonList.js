@@ -2,27 +2,31 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
-import { FaRegStar } from "react-icons/fa";
-import { FaStar } from "react-icons/fa";
-import { IoIosAddCircle } from "react-icons/io";
-import { IoIosCloseCircle } from "react-icons/io";
-import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { FaRegStar, FaStar } from "react-icons/fa";
+import { IoIosAddCircle, IoIosCloseCircle } from "react-icons/io";
+import { useState, useEffect } from "react";
 
 export default function PokemonList({ pokemons, types, isComparing = false }) {
-      const [pokemonsId, setPokemonsId] = useState(
-            JSON.parse(localStorage.getItem("favoritePokemons"))?.map((pokemon) => pokemon.id) || [],
-      );
-      const [comparedPokemonsId, setComparedPokemonsId] = useState(
-            JSON.parse(localStorage.getItem("comparePokemons"))?.map((pokemon) => pokemon.id) || [],
-      );
+      const [pokemonsId, setPokemonsId] = useState([]);
+      const [comparedPokemonsId, setComparedPokemonsId] = useState([]);
+      const [isMounted, setIsMounted] = useState(false);
 
       const router = useRouter();
-
-      localStorage.setItem("types", JSON.stringify(types));
-
       const routePathname = usePathname();
+
+      useEffect(() => {
+            const favPokemons = JSON.parse(localStorage.getItem("favoritePokemons")) || [];
+            const compPokemons = JSON.parse(localStorage.getItem("comparePokemons")) || [];
+
+            setPokemonsId(favPokemons.map((pokemon) => pokemon.id));
+            setComparedPokemonsId(compPokemons.map((pokemon) => pokemon.id));
+
+            if (types && types.length > 0) {
+                  localStorage.setItem("types", JSON.stringify(types));
+            }
+            setIsMounted(true);
+      }, [types]);
 
       function handleAddSearchParam(type, param) {
             const currentParams = new URLSearchParams(window.location.search);
@@ -54,20 +58,17 @@ export default function PokemonList({ pokemons, types, isComparing = false }) {
       function handleAddToLocalCompareStorage(id) {
             const comparePokemons = JSON.parse(localStorage.getItem("comparePokemons")) || [];
 
-            // Sprawdzanie, czy Pokémon z podanym ID już istnieje w porównaniu
             const alreadyInComparison = comparePokemons.some((pokemon) => pokemon.id === id);
             if (alreadyInComparison) {
                   console.log("This Pokémon is already in the comparison.");
                   return;
             }
 
-            // Ograniczenie do maksymalnie 2 Pokémonów
             if (comparePokemons.length >= 2) {
                   console.log("You can only compare up to 2 Pokémon.");
                   return;
             }
 
-            // Dodanie nowego Pokémona do listy porównawczej
             const newCom = pokemons.filter((pokemon) => pokemon.id === id).concat(comparePokemons);
             localStorage.setItem("comparePokemons", JSON.stringify(newCom));
             setComparedPokemonsId(newCom.map((pokemon) => pokemon.id));
@@ -136,29 +137,39 @@ export default function PokemonList({ pokemons, types, isComparing = false }) {
                                                 />
                                           </Link>
 
-                                          {pokemonsId.includes(pokemon.id) ? (
-                                                <FaStar
-                                                      onClick={() => handleRemoveFromLocalStorage(pokemon.id)}
-                                                      className="fav_star_rem"
-                                                />
-                                          ) : (
-                                                <FaRegStar
-                                                      onClick={() => handleAddToLocalStorage(pokemon.id)}
-                                                      className="fav_star_add"
-                                                />
-                                          )}
+                                          {isMounted && (
+                                                <>
+                                                      {pokemonsId.includes(pokemon.id) ? (
+                                                            <FaStar
+                                                                  onClick={() =>
+                                                                        handleRemoveFromLocalStorage(pokemon.id)
+                                                                  }
+                                                                  className="fav_star_rem"
+                                                            />
+                                                      ) : (
+                                                            <FaRegStar
+                                                                  onClick={() => handleAddToLocalStorage(pokemon.id)}
+                                                                  className="fav_star_add"
+                                                            />
+                                                      )}
 
-                                          {!isComparing && !isCompareLimitReached && (
-                                                <IoIosAddCircle
-                                                      onClick={() => handleAddToLocalCompareStorage(pokemon.id)}
-                                                      className="io_ios_circle"
-                                                />
-                                          )}
-                                          {isComparing && (
-                                                <IoIosCloseCircle
-                                                      onClick={() => handleRemoveFromLocalCompareStorage(pokemon.id)}
-                                                      className="io_ios_circle"
-                                                />
+                                                      {!isComparing && !isCompareLimitReached && (
+                                                            <IoIosAddCircle
+                                                                  onClick={() =>
+                                                                        handleAddToLocalCompareStorage(pokemon.id)
+                                                                  }
+                                                                  className="io_ios_circle"
+                                                            />
+                                                      )}
+                                                      {isComparing && (
+                                                            <IoIosCloseCircle
+                                                                  onClick={() =>
+                                                                        handleRemoveFromLocalCompareStorage(pokemon.id)
+                                                                  }
+                                                                  className="io_ios_circle"
+                                                            />
+                                                      )}
+                                                </>
                                           )}
                                     </li>
                               );
