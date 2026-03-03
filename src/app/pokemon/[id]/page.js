@@ -1,10 +1,21 @@
 //app/pokemon/[id]/page.js
+
 import PokemonDetails from "@/app/components/PokemonDetails";
+import { notFound } from "next/navigation";
 
 export default async function PokemonDetailsPage({ params }) {
       const { id } = await params;
 
-      const pokemonDetails = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then((res) => res.json());
+      try {
+            const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
 
-      return <PokemonDetails pokemonDetails={pokemonDetails} />;
+            if (!res.ok) {
+                  return notFound();
+            }
+
+            const pokemonDetails = await res.json();
+            return <PokemonDetails pokemonDetails={pokemonDetails} />;
+      } catch (error) {
+            return notFound();
+      }
 }
