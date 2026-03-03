@@ -1,7 +1,8 @@
 //app/favorites/page.js
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import PokemonList from "../components/PokemonList";
 
 export default function FavoritePage({ searchParams }) {
@@ -47,5 +48,9 @@ export default function FavoritePage({ searchParams }) {
             .filter((pokemon) => filterName(pokemon) && filterType(pokemon))
             .slice(0, limit);
 
-      return <PokemonList pokemons={filteredPokemons} types={typesName} />;
+      return (
+            <Suspense fallback={<p>Wczytywanie filtrów...</p>}>
+                  <PokemonList pokemons={filteredPokemons} types={typesName} />
+            </Suspense>
+      );
 }
