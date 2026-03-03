@@ -1,17 +1,36 @@
 //app/pokemon/page.js
+
 import PokemonList from "../components/PokemonList";
 import config from "@/app/config.json";
+import { Suspense } from "react";
 
 export default async function PokemonPage({ searchParams }) {
       const { typesEndpoint, pokemonsEndpoint } = config.APIConfig;
 
-      const data = await fetch(`${pokemonsEndpoint}?limit=${config.limit}`, { next: { revalidate: 60 } }).then((res) =>
-            res.json(),
-      );
+      const type = searchParams.type || "all";
+      const limitParam = searchParams.limit || "20";
+      const limit = Math.min(parseInt(limitParam), 50);
+      const name = searchParams.name || "";
+
+      let basicPokemons = [];
+
+      if (type !== "all") {
+            const typeData = await fetch(`${typesEndpoint}/${type}`).then((res) => res.json());
+            basicPokemons = typeData.pokemon.map((p) => p.pokemon);
+      } else {
+            const data = await fetch(`${pokemonsEndpoint}?limit=1000`).then((res) => res.json());
+            basicPokemons = data.results;
+      }
+
+      if (name) {
+            basicPokemons = basicPokemons.filter((pokemon) => pokemon.name.toLowerCase().includes(name.toLowerCase()));
+      }
+
+      const paginatedPokemons = basicPokemons.slice(0, limit);
 
       const pokemons = await Promise.all(
-            data.results.map(async (pokemonData) => {
-                  const pokemon = await fetch(pokemonData.url, { next: { revalidate: 60 } }).then((res) => res.json());
+            paginatedPokemons.map(async (pokemonData) => {
+                  const pokemon = await fetch(pokemonData.url).then((res) => res.json());
                   return {
                         name: pokemon.name,
                         id: pokemon.id,
@@ -25,25 +44,11 @@ export default async function PokemonPage({ searchParams }) {
             .then((res) => res.json())
             .then((data) => data.results.map((type) => type.name));
 
-      const type = searchParams.type || "all";
-      const limitParam = searchParams.limit || "20";
-      const limit = Math.min(parseInt(limitParam), 20);
-      const name = searchParams.name || "";
-
-      const filterType = (pokemon) => {
-            if (type === "all") return true;
-            return pokemon.types.map((type) => type.type.name).includes(type);
-      };
-
-      const filterName = (pokemon) => {
-            return pokemon.name.toLowerCase().includes(name.toLowerCase());
-      };
-
-      const filteredPokemons = pokemons.filter((pokemon) => filterName(pokemon) && filterType(pokemon)).slice(0, limit);
-
       return (
             <section className="pokemons_list">
-                  <PokemonList pokemons={filteredPokemons} types={[...typesData, "all"]} />
+                  <Suspense fallback={<p>Wczytywanie listy Pokémonów...</p>}>
+                        <PokemonList pokemons={pokemons} types={["all", ...typesData]} />
+                  </Suspense>
             </section>
       );
 }
