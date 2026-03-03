@@ -2,16 +2,16 @@
 //import '@/app/style/details.css'
 export default function PokemonDetails({ pokemonDetails }) {
       const { name, weight, height } = pokemonDetails;
+
+      const imgUrl =
+            pokemonDetails.sprites?.other?.["official-artwork"]?.front_default ||
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/200px-No_image_available.svg.png";
+
       return (
             <div className="pokemon-details">
                   <h1>Pokemon Details {name}</h1>
                   <div className="details_wrap">
-                        <img
-                              src={pokemonDetails.sprites.other["official-artwork"].front_default}
-                              alt="Pokemon Photo"
-                              width={200}
-                              height={200}
-                        />
+                        <img src={imgUrl} alt={`Pokemon ${name}`} width={200} height={200} />
                         <div className="details_content">
                               <h3>Elementary information:</h3>
                               <p>
