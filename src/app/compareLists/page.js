@@ -1,4 +1,5 @@
 //app/compareLists/page.js
+
 "use client";
 
 import Compare from "@/app/components/Compare";

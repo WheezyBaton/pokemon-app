@@ -1,5 +1,5 @@
 //app/components/PokemonDetails.js
-//import '@/app/style/details.css'
+
 export default function PokemonDetails({ pokemonDetails }) {
       const { name, weight, height } = pokemonDetails;
 

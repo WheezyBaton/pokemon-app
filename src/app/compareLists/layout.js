@@ -1,4 +1,5 @@
 //app/compareLists/layout.js
+
 export default function CompareLayout({ children }) {
       return (
             <section className="compare-list">

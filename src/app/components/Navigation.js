@@ -1,4 +1,5 @@
 //app/components/Navigation.js
+
 import Link from "next/link";
 import "@/app/style/main.css";
 
